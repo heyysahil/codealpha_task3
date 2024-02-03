@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Tracker System</title>
+    <style>
+        /* Add your CSS code here */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            background-color: #2ecc71;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .form {
+            display: flex;
+            margin: 20px 0;
+        }
+
+        .form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+
+        .form button {
+            width: 100px;
+            padding: 10px;
+            border: none;
+            background-color: #2ecc71;
+            color: white;
+            cursor: pointer;
+        }
+
+        .form button:hover {
+            background-color: #27ae60;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th, .table td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .table tr:nth-child(even) {
+            background-color: #f0f0f0;
+        }
+
+        .status {
+            padding: 5px;
+            border-radius: 5px;
+            color: white;
+        }
+
+        .status.open {
+            background-color: #f39c12;
+        }
+
+        .status.closed {
+            background-color: #c0392b;
+        }
+
+        .delete {
+            color: #c0392b;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Issue Tracker System</h1>
+    <div class="container">
+        <div class="form">
+            <input type="text" id="issueDescInput" placeholder="Describe the issue...">
+            <input type="text" id="issueAssignInput" placeholder="Assign to...">
+            <input type="text" id="issueSeverityInput" placeholder="Severity (Low/Medium/High)">
+            <button id="issueAddButton">Add</button>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Issue ID</th>
+                    <th>Description</th>
+                    <th>Assigned To</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="issueList">
+                <!-- Dynamically generated rows will go here -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        // Add your JavaScript code here
+
+        // Get the DOM elements
+        const issueDescInput = document.getElementById("issueDescInput");
+        const issueAssignInput = document.getElementById("issueAssignInput");
+        const issueSeverityInput = document.getElementById("issueSeverityInput");
+        const issueAddButton = document.getElementById("issueAddButton");
+        const issueList = document.getElementById("issueList");
+
+        // Define a function to generate a random issue ID
+        function generateIssueId() {
+            return Math.floor(Math.random() * 1000000);
+        }
+
+        // Define a function to create a new issue object from the input values
+        function createIssue() {
+            return {
+                id: generateIssueId(),
+                description: issueDescInput.value,
+                assignedTo: issueAssignInput.value,
+                severity: issueSeverityInput.value,
+                status: "Open"
+            };
+        }
+
+        // Define a function to save the issue to the local storage
+        function saveIssue(issue) {
+            // Get the existing issues from the local storage or an empty array
+            let issues = JSON.parse(localStorage.getItem("issues")) || [];
+            // Push the new issue to the array
+            issues.push(issue);
+            // Save the array back to the local storage
+            localStorage.setItem("issues", JSON.stringify(issues));
+        }
+
+        // Define a function to display the issue on the table
+        function displayIssue(issue) {
+            // Create a table row element
+            let row = document.createElement("tr");
+            // Set the row's HTML content with the issue data
+            row.innerHTML = `
+                <td>${issue.id}</td>
+                <td>${issue.description}</td>
+                <td>${issue.assignedTo}</td>
+                <td>${issue.severity}</td>
+                <td><span class="status ${issue.status.toLowerCase()}">${issue.status}</span></td>
+                <td><a class="delete" href="#" data-id="${issue.id}">Delete</a></td>
+            `;
+            // Append the row to the table body
+            issueList.appendChild(row);
+        }
+
+        // Define a function to fetch and display all the issues from the local storage
+        function fetchIssues() {
+            // Get the existing issues from the local storage or an empty array
+            let issues = JSON.parse(localStorage.getItem("issues")) || [];
+            // Loop through the issues array and display each issue
+            for (let issue of issues) {
+                displayIssue(issue);
+            }
+        }
+
+        // Define a function to delete an issue from the local storage and the table
+        function deleteIssue(id) {
+            // Get the existing issues from the local storage
+            let issues = JSON.parse(localStorage.getItem("issues"));
+            // Filter out the issue with the given id
+            issues = issues.filter(issue => issue.id != id);
+            // Save the updated array back to the local storage
+            localStorage.setItem("issues", JSON.stringify(issues));
+            // Reload the page to update the table
+            location.reload();
+        }
+
+        // Add an event listener to the add button to handle the form submission
+        issueAddButton.addEventListener("click", function(e) {
+            // Prevent the default behavior of the button
+            e.preventDefault();
+            // Create a new issue object from the input values
+            let issue = createIssue();
+            // Save the issue to the local storage
+            saveIssue(issue);
+            // Display the issue on the table
+            displayIssue(issue);
+            // Clear the input fields
+            issueDescInput.value = "";
+            issueAssignInput.value = "";
+            issueSeverityInput.value = "";
+        });
+
+        // Add an event listener to the table body to handle the delete link click
+        issueList.addEventListener("click", function(e) {
+            // Check if the target element is a delete link
+            if (e.target.classList.contains("delete")) {
+                // Prevent the default behavior of the link
+                e.preventDefault();
+                // Get the issue id from the data attribute
+                let id = e.target.dataset.id;
+                // Delete the issue from the local storage and the table
+                deleteIssue(id);
+            }
+        });
+
+        // Call the fetchIssues function when the page loads
+        fetchIssues();
+    </script>
+</body>
+</html>
